@@ -9,7 +9,7 @@ optparser.add_option("-b", "--bitext", dest="bitext", default="data/dev-test-tra
 optparser.add_option("-n", "--num_sentences", dest="num_sents", default=sys.maxint, type="int", help="Number of sentences to use for training and alignment")
 (opts, _) = optparser.parse_args()
 
-sys.stderr.write("Training with IBM2...\n")
+sys.stderr.write("Training with IBM1...\n")
 bitext = [[sentence.strip().split() for sentence in pair.split(' ||| ')] for pair in open(opts.bitext)][:opts.num_sents]
 t = defaultdict(lambda : defaultdict(float))
 q = defaultdict(lambda : defaultdict(lambda : defaultdict(float)))
@@ -20,21 +20,19 @@ c_e_all = defaultdict(float);
 c_len_pair = defaultdict(lambda : defaultdict(lambda : defaultdict(float)));
 c_len_all = defaultdict(float);
 
-# Preprocess data
+#Preprocess data
 for line_pair in bitext :
 	for line in line_pair :
 		for i in xrange(len(line)) :
 			line[i] = line[i].lower()
-
+	line_pair[1].insert(0, "NULL")
 
 
 for line_pair in bitext : 
-	#line_pair[1].append("NULL")
 	f_len = len(line_pair[0])
 	e_len = len(line_pair[1])
 	# for each length pair, maintain a 2 dim array
 	lm_pair = str(f_len) + "," + str(e_len)
-
 	# f sentence
 	for i in xrange(f_len) :
 
@@ -47,6 +45,56 @@ for line_pair in bitext :
 			# initialize t and q from random value
 			q[lm_pair][str(i)][str(j)] = 1 / (1 + float(e_len))
 			t[f_word][e_word] = 0.1
+
+# EM algorithm
+num_iter = 50
+for iter in xrange(num_iter) :
+	for line_pair in bitext :
+		f_len = len(line_pair[0])
+		e_len = len(line_pair[1])
+		lm_pair = str(f_len) + "," + str(e_len)
+
+		# f sentence
+		for i in xrange(f_len) :
+			f_word = line_pair[0][i]
+
+			# iterate all j
+			sum_j = 0.0
+			for each_j in xrange(e_len) :
+				e_word = line_pair[1][each_j]
+				sum_j += t[f_word][e_word]
+
+			# e sentence
+			for j in xrange(e_len) :
+				# calculate delta
+				e_word = line_pair[1][j]
+				delta = t[f_word][e_word] / sum_j
+
+				# add counters
+				c_ef_pair[f_word][e_word] += delta
+				c_e_all[e_word] += delta
+				if iter == num_iter - 1 :
+					c_len_pair[lm_pair][str(i)][str(j)] += delta
+					c_len_all[lm_pair] += delta
+
+
+	# update params
+	for f_word in t.keys() :
+		for e_word in t[f_word].keys() :
+			t[f_word][e_word] = float(c_ef_pair[f_word][e_word]) / c_e_all[e_word]
+			c_ef_pair[f_word][e_word] = 0.0
+
+	# Clear counters after each iteration
+	for e_word in c_e_all.keys() : 
+		c_e_all[e_word] = 0.0
+
+	if iter == num_iter - 1 :
+		# get initialized q
+		for lm_pair in q.keys() :
+			for i_iter in q[lm_pair].keys() :
+				for j_iter in q[lm_pair][i_iter] :
+					q[lm_pair][i_iter][j_iter] = float(c_len_pair[lm_pair][i_iter][j_iter]) / c_len_all[lm_pair]
+
 
 # EM algorithm
 num_iter = 20
@@ -96,7 +144,6 @@ for iter in xrange(num_iter) :
 		c_e_all[e_word] = 0.0
 
 
-
 # use params to calculate alignment
 for line_pair in bitext :
 	f_len = len(line_pair[0])
@@ -104,7 +151,7 @@ for line_pair in bitext :
 	# for each length pair, maintain a 2 dim array
 	lm_pair = str(f_len) + "," + str(e_len)
 
-	for i in xrange(f_len ) :
+	for i in xrange(f_len) :
 		f_word = line_pair[0][i]
 		best_a_pos = -1
 		best_a_pr = 0.0
@@ -114,8 +161,10 @@ for line_pair in bitext :
 			if pr > best_a_pr :
 				best_a_pr = pr
 				best_a_pos = j
-				best_e = e_word
-		print str(i - 1) + "-" + str(best_a_pos),;
+
+		if best_a_pos == 0:
+			continue;
+		print str(i) + "-" + str(best_a_pos - 1),;
 
 	print
 
