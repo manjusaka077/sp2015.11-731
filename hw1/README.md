@@ -1,11 +1,11 @@
-*My method:
-**Preprocess data
+My method:
+Preprocess data
 - Try to use compound split on German side but failed. 
-- Then use snowball stemmer on both sides of data. 
+- Then use snowball stemmer on both sides of data. TestApp.java is the script for using stemmer.
 - Set all letters to lowercase.
-**Model
-- Use IBM model 2, with 20 iterations, achieve AER = 0.339213
-- Use IBM model 1 to initialize t with 50 iterations, achieve AER = ?
+Model
+- IBM2.py Use IBM model 2, with 20 iterations, achieve AER = 0.339213
+- other python scripts are just for trying some new ways, please ignore them
 
 
 There are three Python programs here (`-h` for usage):
