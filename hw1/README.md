@@ -1,3 +1,13 @@
+*My method:
+**Preprocess data
+- Try to use compound split on German side but failed. 
+- Then use snowball stemmer on both sides of data. 
+- Set all letters to lowercase.
+**Model
+- Use IBM model 2, with 20 iterations, achieve AER = 0.339213
+- Use IBM model 1 to initialize t with 50 iterations, achieve AER = ?
+
+
 There are three Python programs here (`-h` for usage):
 
  - `./align` aligns words using Dice's coefficient.
