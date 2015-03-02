@@ -3,11 +3,12 @@ import argparse # optparse is deprecated
 from itertools import islice # slicing for iterators
  
 
-alpha = 0.9
+alpha = 0.6
 
 # DRY
 def word_matches(h, ref):
-    return sum(1 for w in h if w in ref)
+    return [w for w in h if w in ref]
+    # return sum(1 for w in h if w in ref)
     # or sum(w in ref for w in f) # cast bool -> int
     # or sum(map(ref.__contains__, h)) # ugly!
 
@@ -20,12 +21,18 @@ def fmean(h, ref):
 
     h_len = len(h)
     ref_len = len(ref)
+
     rset = set(ref)
     hset = set(h)
+
     h_match = word_matches(h, rset)
     ref_match = word_matches(ref, hset)
-    p = float(h_match) / h_len
-    r = float(ref_match) / ref_len
+
+    h_num_match = len(h_match)
+    ref_num_match = len(ref_match)
+
+    p = float(h_num_match) / h_len
+    r = float(ref_num_match) / ref_len
     #print str(p) + "\t" + str(r)
     if not (p == 0.0 and r == 0.0) :
         f_mean = alpha * p * r / (alpha * p + (1 - alpha) * r)
