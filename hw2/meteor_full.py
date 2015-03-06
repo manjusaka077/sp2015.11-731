@@ -3,28 +3,60 @@ import argparse # optparse is deprecated
 from itertools import islice # slicing for iterators
 import copy
 
-#from nltk.stem.lancaster import LancasterStemmer
-#st = LancasterStemmer() # stem
-from nltk.stem.porter import *
-st = PorterStemmer()
+from nltk.stem.lancaster import LancasterStemmer
+st = LancasterStemmer() # stem
 
 from nltk.corpus import wordnet as wn # synonymy
 
 from nltk.tokenize import WordPunctTokenizer # tokenizer
 
 alpha = 0.6
+beta = 3
+gamma = 0.3
+syn = 1
+
+# Match word
+def word_matches(h, ref) :
+    match_score = 0.0
+    match_pair = []
+    left_word_index = [i for i, word in enumerate(ref)]
+
+    for i, word in enumerate(h) :
+
+        if len(left_word_index) == 0 :
+            break
+       
+        for index in left_word_index :
+            ref_word = ref[index]
+            # Exact match or syn match
+            if word == ref_word: 
+                match_pair.append([i, index])
+                left_word_index.remove(index)
+                match_score += 1
+                break
+            # stem match
+            # stem_word = st.stem(word)
+            # if stem_word == st.stem(eachword) :
+            #     #print "stem : " + word + "\t" + st.stem(word) + "\t" + eachword
+            #     match_pair.append([i, index])
+            #     left_word_index.remove(index)
+            #     match_score += 1
+            #     break
+            if word in get_lemmas(ref_word) :
+                match_pair.append([i, index])
+                left_word_index.remove(index)
+                match_score += 1 * syn
+                break
+
+    return match_pair, match_score
 
 # Match word
 def num_word_matches(h, ref) :
 
     match = 0
-    stem = 0
-    syns = 0
 
     ref_copy = copy.deepcopy(ref)
-    h_copy = copy.deepcopy(h)
-
-    
+   
     for word in h :
         if len(ref_copy) == 0 :
             break
@@ -32,23 +64,20 @@ def num_word_matches(h, ref) :
         if word in ref_copy :
             match += 1
             ref_copy.remove(word)
-            #h_copy.remove(word)
             continue
         # stem match
-        stem_word = st.stem(word)
+        # stem_word = st.stem(word)
         for eachword in ref_copy :
-            if stem_word == st.stem(eachword) :
-                stem += 1
-                ref_copy.remove(eachword)
-                break
+        #     if stem_word == st.stem(eachword) :
+        #         match += 1
+        #         ref_copy.remove(eachword)
+        #         break
         # synonymy match
             if word in get_lemmas(eachword):
-                syns += 1
+                match += 1
                 ref_copy.remove(eachword)
                 break
-    #print "match : %i stem : %i syns: %i" %(match, stem, syns)
-    return match + stem + syns
-
+    return match
 
 def get_lemmas(word) :
     # rset is a set of words
@@ -67,8 +96,9 @@ def fmean(h, ref):
     h_len = len(h)
     ref_len = len(ref)
 
-    h_num_match = num_word_matches(h, ref)
+    h_match, h_num_match = word_matches(h, ref)
     ref_num_match = num_word_matches(ref, h)
+
 
     p = float(h_num_match) / h_len
     r = float(ref_num_match) / ref_len
@@ -77,15 +107,39 @@ def fmean(h, ref):
         f_mean = alpha * p * r / (alpha * p + (1 - alpha) * r)
     else :
         f_mean = 0.0
-    #print f_mean
-    return f_mean
+
+    # fragmentation
+    if h_num_match > 1 :
+        fragmentation = (frag(h_match) - 1) / float(h_num_match - 1)
+        DF = gamma * pow(fragmentation, beta)
+        final = f_mean * (1 - DF)
+    else :
+        final = f_mean
+
+    return final
 
 # Calculate fragment
-def frag(h_match, ref_match) :
+def frag(match_pair) :
     """
-    h_match : list of matched words in h
-    ref_match : list of matched words in ref
+    match_pair: pair of alignments from h to ref
     """
+    h = match_pair[0][0]
+    ref = match_pair[0][1]
+    del match_pair[0]
+
+    for i in xrange(1, len(match_pair) + 1) :
+        if [h + i, ref + i] in match_pair :
+            match_pair.remove([h + i, ref + i])
+        else :
+            break
+
+    fragment = 1
+
+    if len(match_pair) != 0 :
+        fragment += frag(match_pair)
+
+    return fragment
+
  
 def main():
     parser = argparse.ArgumentParser(description='Evaluate translation hypotheses.')
