@@ -105,18 +105,18 @@ def ngram(sentence, n) :
     ngram = []
     for i in xrange(len(sentence) - n + 1) :
         ngram.append(" ".join(sentence[i : i + n]))
-    #return set(ngram)
-    return ngram
+    return set(ngram)
+    #return ngram
 
 def ngram_matches(h, ref, n) :
     ngram_match = 0
     h_ngram = ngram(h, n)
     ref_ngram = ngram(ref, n)
-    for pair in h_ngram :
-        if pair in ref_ngram :
-            ngram_match += 1
-    #ngram_match = h_ngram & ref_ngram
-    return ngram_match, len(h_ngram)
+    # for pair in h_ngram :
+    #     if pair in ref_ngram :
+    #         ngram_match += 1
+    ngram_match = h_ngram & ref_ngram
+    return len(ngram_match), len(h_ngram)
 
 # Calculate Fmean
 def fscore(h, ref):
