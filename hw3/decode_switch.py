@@ -41,7 +41,7 @@ def calc_prob(f, stacks) :
                         tm_score = h.tm_score + phrase.logprob
                         trans_len = len(h.translated)
 
-                        for k in xrange(max(0, trans_len - 6), trans_len + 1):
+                        for k in xrange(0, trans_len + 1):
                             translated = copy.deepcopy(h.translated)
                             translated.insert(k, phrase.english)
 
