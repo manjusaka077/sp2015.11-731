@@ -4,6 +4,7 @@ import sys
 import models
 import heapq
 from collections import namedtuple
+import copy
 
 parser = argparse.ArgumentParser(description='Simple phrase based decoder.')
 parser.add_argument('-i', '--input', dest='input', default='data/input', help='File containing sentences to translate (default=data/input)')
@@ -40,8 +41,9 @@ def calc_prob(f, stacks) :
                         tm_score = h.tm_score + phrase.logprob
                         trans_len = len(h.translated)
 
-                        for k in xrange(max(0, trans_len - 5), trans_len + 1):
-                            translated = h.translated[:k] + [phrase.english] + h.translated[k:]
+                        for k in xrange(max(0, trans_len - 6), trans_len + 1):
+                            translated = copy.deepcopy(h.translated)
+                            translated.insert(k, phrase.english)
 
                             lm_score,lm_state = score(translated)
                             lm_score += lm.end(lm_state) if j == len(f) else 0.0
