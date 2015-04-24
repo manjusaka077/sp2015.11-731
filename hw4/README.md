@@ -1,3 +1,21 @@
+# My method
+## Features
+I use the provided 4 log probs, previous word, and next word, as recommaned for base line code.
+
+## Matrix
+For the sparse features, I first create lil_matrix, read file and add value to matrix, then converted to a csr_matrix.
+
+For the weight vector, I use numpy array.
+
+## Parameter
+I use 3 tunable paramters: alpha for learning rate, gamma for margin, and number of iterations. Because of the time taken to run the code each time, I do not have the chance to tune these parameters. Hope this can be done during the extension 2 weeks.
+
+## Speed
+It must be the part I spend most time in this homework! At first my code as so slow that it takes almost 1 second to train each sample which is totally a disaster. Then I use profiler to look into the code and fix several problems (like the matrix cannot be saved as sparse matrix and the choice of matrix type). But now I still suffer from the high cost of filling in the sparse matrix. Hope I can figure out a method to avoid chaning sparsity of the feature matrix during extension days :)
+
+The current version takes about 1 hour to train the whole dataset for 1 iteration.
+
+# Original
 There are three Python programs here (`-h` for usage):
 
  - `./rerank` a simple reranker that simply sorts candidate translations on log p(czech|english)
