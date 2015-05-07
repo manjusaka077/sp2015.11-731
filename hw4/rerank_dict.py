@@ -21,7 +21,7 @@ parser.add_argument('--num_sents', '-n', default='0')
 parser.add_argument('--ttable', '-t', default='data/ttable')
 parser.add_argument('--save', '-s', default='data/weights') # save weights
 parser.add_argument('--load', '-l', default='') # load weights from file
-parser.add_argument('--alpha', '-a', default='0.001')
+parser.add_argument('--alpha', '-a', default='0.01')
 parser.add_argument('--gamma', '-g', default='0.1')
 parser.add_argument('--iteration', '-x', default='1')
 args = parser.parse_args()
@@ -29,6 +29,7 @@ args = parser.parse_args()
 # Global parameter
 alpha = float(args.alpha)
 gamma = float(args.gamma)
+init_val = 0.001
 
 # Global data structures
 num_sents = int(args.num_sents)
@@ -63,7 +64,7 @@ def dot_number(w, num) :
 
 # Funcs for features
 def add_feature(feature_str, weights) :
-	weights[feature_str] = 0.1
+	weights[feature_str] = init_val
 	return weights
 
 def create_feature(left_context, right_context, phrase, target) :
@@ -79,8 +80,8 @@ def create_feature(left_context, right_context, phrase, target) :
 		"src:" + phrase + "_tgt:" + target + "_next:" + next_word
 
 def read_features() :
-	weights = {'log_lex_prob_tgs': 0.1, 'log_prob_sgt': 0.1, \
-					'log_lex_prob_sgt': 0.1, 'log_prob_tgs': 0.1}
+	weights = {'log_lex_prob_tgs': init_val, 'log_prob_sgt': init_val, \
+					'log_lex_prob_sgt': init_val, 'log_prob_tgs': init_val}
 	for line in train_data :
 		left_context, phrase, right_context = [part.strip() for part in line.split('|||')]
 		targets = translation_table[phrase].keys()
@@ -197,8 +198,8 @@ def predict(weights) :
 def main() :
 	if (os.path.isfile(args.load)) :
 		weights = cp.load(open(args.load, 'r'))
-		print >>sys.stderr, "Load weights with dimension of %s" %str(weights.shape)
-		feature_map = cp.load(open(args.load + "_features", 'r'))
+		print >>sys.stderr, "Load weights with dimension of %s" %str(len(weights))
+		# feature_map = cp.load(open(args.load + "_features", 'r'))
 	else :
 		weights = read_features()
 		# print >>sys.stderr, weights
