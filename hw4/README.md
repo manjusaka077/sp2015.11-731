@@ -15,6 +15,10 @@ It must be the part I spend most time in this homework! At first my code as so s
 
 The current version takes about 1 hour to train the whole dataset for 1 iteration.
 
+# Updates
+## Achieve Baseline(05/06/2015)
+In `rerank_dict.py` I abandon matrices and use dictionary to store weights and feature vectors. It significantly improves the speed. Now doing 2 iterations uses about 5 minutes. After trying out some values for the alpha and gamma, I choose 0.001 for alpha and 0.1 for gamma.
+
 # Original
 There are three Python programs here (`-h` for usage):
 
