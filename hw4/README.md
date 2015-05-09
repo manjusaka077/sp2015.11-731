@@ -19,6 +19,10 @@ The current version takes about 1 hour to train the whole dataset for 1 iteratio
 ## Achieve Baseline(05/06/2015)
 In `rerank_dict.py` I abandon matrices and use dictionary to store weights and feature vectors. It significantly improves the speed. Now doing 2 iterations uses about 5 minutes. After trying out some values for the alpha and gamma, I choose 0.01 for alpha and 0.1 for gamma. The initial value for the weights is 0.001 and number of iteration is 4. The accuracy now is 0.429542 for dev set and 0.444801 for test set.
 
+## Other try
+Try to let learning rate decrease during each epoch. But it fails.
+Try to add L2 regularization. But when the number of epochs is more than 2, the accuracy largely goes down.
+
 # Original
 There are three Python programs here (`-h` for usage):
 
