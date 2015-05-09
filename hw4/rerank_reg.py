@@ -23,12 +23,14 @@ parser.add_argument('--save', '-s', default='data/weights') # save weights
 parser.add_argument('--load', '-l', default='') # load weights from file
 parser.add_argument('--alpha', '-a', default='0.01')
 parser.add_argument('--gamma', '-g', default='0.1')
+parser.add_argument('--mu', '-u', default='0.0001')
 parser.add_argument('--iteration', '-x', default='1')
 args = parser.parse_args()
 
 # Global parameter
 alpha = float(args.alpha)
 gamma = float(args.gamma)
+mu = float(args.mu)
 init_val = 0.001
 
 # Global data structures
@@ -54,7 +56,7 @@ def minus(f_best, f_other) :
 	s = {}
 	for k in f_other:
 		s[k] = f_best[k] - f_other[k]
-	return s	
+	return s
 
 def dot_number(w, num) :
 	for k in w.keys() :
@@ -105,12 +107,13 @@ def calc_loss(diff, weights) :
 		
 # Train
 # @profile
-def train(weights, it) :
+def train(weights) :
 	print >>sys.stderr, "Begin training using data in %s..." %args.input
 
 	rand_permut = np.random.permutation(min(len(train_ref), num_sents))
-	alpha_it = alpha * pow(it + 1, -1)
-	# alpha_it = alpha
+
+	A = dict((key, 0) for key in weights)
+	count = 0
 
 	for num, i in enumerate(rand_permut) :
 
@@ -148,15 +151,23 @@ def train(weights, it) :
 
 			diff = minus(f_probs_best, f_probs_other)
 			loss = calc_loss(diff, weights)
-		
+			
+			count += 1
 			if loss != 0 :
 				# print >>sys.stderr, "Update"
 				# update_val = minus(f_probs_other, f_probs_best)
-				diff = dot_number(diff, alpha_it)
+				diff = dot_number(diff, alpha)
 				for k in diff :
+					# L2 regularization
+					weights[k] *= pow(1 - alpha * 2 * mu, count - A[k])
 					weights[k] += diff[k]
+					A[k] = count
 
 		sys.stderr.write('%d\r' %(num + 1))
+
+	# Update regularization for all weights
+	for k in weights :
+		weights[k] *= pow(1 - alpha * 2 * mu, count - A[k])
 
 	print >>sys.stderr
 	# if os.path.isfile(args.save) :
@@ -200,17 +211,12 @@ def predict(weights) :
 def main() :
 	if (os.path.isfile(args.load)) :
 		weights = cp.load(open(args.load, 'r'))
-		print >>sys.stderr, "Load weights with dimension of %s" %str(len(weights))
-		# feature_map = cp.load(open(args.load + "_features", 'r'))
+		print >>sys.stderr, "Load weights with dimension of %i" %len(weights)
 	else :
 		weights = read_features()
-		# print >>sys.stderr, weights
-
-		# cp.dump(feature_map, open(args.save + "_features", 'w'))
-		# cp.dump(weights, open("data/weights_init", 'w'))
 	
 	for it in xrange(int(args.iteration)) :
-		weights = train(weights, it)
+		weights = train(weights)
 		# for key in weights :
 		# 	if weights[key] != 0 :
 		# 		print >>sys.stderr, weights[key]
